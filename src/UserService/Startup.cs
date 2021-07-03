@@ -28,8 +28,6 @@ namespace UserService
         public void ConfigureServices(IServiceCollection services)
         {
 
-            services.AddDbContext<UserServiceContext>(options =>
-         options.UseSqlite(@"Data Source=user.db"));
 
 
             services.AddControllers();
@@ -37,6 +35,14 @@ namespace UserService
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "UserService", Version = "v1" });
             });
+
+            services.AddDbContext<UserServiceContext>(options =>
+         options.UseSqlite(@"Data Source=user.db"));
+
+            services.AddSingleton<IntegrationEventSenderService>();
+            services.AddHostedService<IntegrationEventSenderService>(provider =>
+            provider.GetService<IntegrationEventSenderService>());
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
