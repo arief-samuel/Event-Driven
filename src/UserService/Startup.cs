@@ -29,8 +29,9 @@ namespace UserService
         {
 
             services.AddDbContext<UserServiceContext>(options =>
-                options.UseSqlite(@"Data Source=user.db")
-            );
+         options.UseSqlite(@"Data Source=user.db"));
+
+
             services.AddControllers();
             services.AddSwaggerGen(c =>
             {
@@ -46,6 +47,7 @@ namespace UserService
                 app.UseDeveloperExceptionPage();
                 app.UseSwagger();
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "UserService v1"));
+
                 dbContext.Database.EnsureCreated();
             }
 

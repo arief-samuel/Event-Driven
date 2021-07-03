@@ -21,13 +21,15 @@ namespace PostService
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddDbContext<PostServiceContext>(options =>
-                    options.UseSqlite(@"Data Source=post.db"));
+            
             services.AddControllers();
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "PostService", Version = "v1" });
             });
+
+            services.AddDbContext<PostServiceContext>(options =>
+         options.UseSqlite(@"Data Source=post.db"));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -35,10 +37,11 @@ namespace PostService
         {
             if (env.IsDevelopment())
             {
+                dbContext.Database.EnsureCreated();
+
                 app.UseDeveloperExceptionPage();
                 app.UseSwagger();
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "PostService v1"));
-                dbContext.Database.EnsureCreated();
             }
 
             app.UseRouting();

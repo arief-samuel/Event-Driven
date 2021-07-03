@@ -7,8 +7,6 @@ namespace PostService.Entities
         public string Content { get; set; }
 
         public int UserId { get; set; }
-
-        public string User { get; set; }
-
+        public User User { get; set; }
     }
 }
