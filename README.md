@@ -15,3 +15,6 @@ How to Build a Resilient Architecture with RabbitMQ, C#, Entity Framework, and t
 
 >You added the outbox pattern to your event-driven architecture and made it more resilient.
 You would have to adjust the code to use it in a production environment: Clean up the code and apply security best practices. Apply .NET Core design patterns, error handling, etc. You should also optimize the publisher acknowledgments and use a BackgroundService in the post service.
+
+
+[credit to christianzink](https://itnext.io/the-outbox-pattern-in-event-driven-asp-net-core-microservice-architectures-10b8d9923885)
