@@ -12,6 +12,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
 using UserService.Data;
+using UserService.Services;
 
 namespace UserService
 {
@@ -27,9 +28,6 @@ namespace UserService
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-
-
-
             services.AddControllers();
             services.AddSwaggerGen(c =>
             {
@@ -40,9 +38,7 @@ namespace UserService
          options.UseSqlite(@"Data Source=user.db"));
 
             services.AddSingleton<IntegrationEventSenderService>();
-            services.AddHostedService<IntegrationEventSenderService>(provider =>
-            provider.GetService<IntegrationEventSenderService>());
-
+            services.AddHostedService<IntegrationEventSenderService>(provider => provider.GetService<IntegrationEventSenderService>());
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

@@ -8,7 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using UserService.Data;
 
-namespace UserService
+namespace UserService.Services
 {
     public class IntegrationEventSenderService : BackgroundService
     {
@@ -48,9 +48,10 @@ namespace UserService
                         {
                             var body = Encoding.UTF8.GetBytes(e.Data);
                             channel.BasicPublish(exchange: "user",
-                                                             routingKey: e.Event,
-                                                             basicProperties: null,
-                                                             body: body);
+                                                 routingKey: e.Event,
+                                                 basicProperties: null,
+                                                 body: body);
+
                             Console.WriteLine("Published: " + e.Event + " " + e.Data);
                             dbContext.Remove(e);
                             dbContext.SaveChanges();
