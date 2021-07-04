@@ -67,7 +67,6 @@ namespace PostService
                     }
                     else
                     {
-
                     user.Name = data["newname"].Value<string>();
                         user.Version = newVersion;
                     dbContext.SaveChanges();
