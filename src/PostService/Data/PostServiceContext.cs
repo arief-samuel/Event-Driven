@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using PostService.Entities;
 
 namespace PostService.Data
 {
@@ -17,8 +16,8 @@ namespace PostService.Data
             optionsBuilder.UseMySQL(_connectionString);
         }
 
-        public DbSet<Post> Post { get; set; }
-        public DbSet<User> User { get; set; }
-        public DbSet<Category> Category { get; set; }
+        public DbSet<PostService.Entities.Post> Post { get; set; }
+        public DbSet<PostService.Entities.User> User { get; set; }
+        public DbSet<PostService.Entities.Category> Category { get; set; }
     }
 }

@@ -13,7 +13,7 @@ namespace PostService.Data
 {
     public class DataAccess
     {
-        private readonly List<string> _connectionStrings = new();
+        private readonly List<string> _connectionStrings = new List<string>();
 
         public DataAccess(IConfiguration configuration)
         {
@@ -24,7 +24,6 @@ namespace PostService.Data
                 _connectionStrings.Add(connectionString.Value);
             }
         }
-
 
         public async Task<ActionResult<IEnumerable<Post>>> ReadLatestPosts(string category, int count)
         {
@@ -39,27 +38,32 @@ namespace PostService.Data
             return await dbContext.SaveChangesAsync();
         }
 
-        public async Task InitDatabase(int countUser, int countCategories)
+        public void InitDatabase(int countUsers, int countCategories)
         {
             foreach (var connectionString in _connectionStrings)
             {
                 using var dbContext = new PostServiceContext(connectionString);
+                dbContext.Database.EnsureDeleted();
                 dbContext.Database.EnsureCreated();
-                dbContext.Database.EnsureCreated();
-                for (int i = 1; i < countCategories; i++)
+                for (int i = 1; i <= countUsers; i++)
                 {
-                    await dbContext.Category.AddAsync(new Category { CategoryId = "Category " + i });
-                    await dbContext.SaveChangesAsync();
+                    dbContext.User.Add(new User { Name = "User" + i, Version = 1 });
+                    dbContext.SaveChanges();
+                }
+                for (int i = 1; i <= countCategories; i++)
+                {
+                    dbContext.Category.Add(new Category { CategoryId = "Category" + i });
+                    dbContext.SaveChanges();
                 }
             }
         }
+
         private string GetConnectionString(string category)
         {
             using var md5 = MD5.Create();
             var hash = md5.ComputeHash(Encoding.ASCII.GetBytes(category));
             var x = BitConverter.ToUInt16(hash, 0) % _connectionStrings.Count;
             return _connectionStrings[x];
-
         }
     }
 }
