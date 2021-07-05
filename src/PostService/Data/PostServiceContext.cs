@@ -1,15 +1,24 @@
 using Microsoft.EntityFrameworkCore;
+using PostService.Entities;
 
 namespace PostService.Data
 {
     public class PostServiceContext : DbContext
     {
-        public PostServiceContext(DbContextOptions<PostServiceContext> options)
-            : base(options)
+        private readonly string _connectionString;
+
+        public PostServiceContext(string connectionString)
         {
+            _connectionString = connectionString;
         }
 
-        public DbSet<PostService.Entities.Post> Post { get; set; }
-        public DbSet<PostService.Entities.User> User { get; set; }
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            optionsBuilder.UseMySQL(_connectionString);
+        }
+
+        public DbSet<Post> Post { get; set; }
+        public DbSet<User> User { get; set; }
+        public DbSet<Category> Category { get; set; }
     }
 }

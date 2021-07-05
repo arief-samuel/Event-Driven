@@ -1,5 +1,9 @@
+using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
+
 namespace PostService.Entities
 {
+    [Index(nameof(PostId), nameof(CategoryId))]
     public class Post
     {
         public int PostId { get; set; }
@@ -8,5 +12,10 @@ namespace PostService.Entities
 
         public int UserId { get; set; }
         public User User { get; set; }
+
+        [Required]
+        public string CategoryId { get; set; }
+        public Category  Category { get; set; }
+
     }
 }
