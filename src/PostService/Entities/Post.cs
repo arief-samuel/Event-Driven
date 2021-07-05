@@ -15,7 +15,6 @@ namespace PostService.Entities
 
         [Required]
         public string CategoryId { get; set; }
-        public Category  Category { get; set; }
-
+        public Category Category { get; set; }
     }
 }
