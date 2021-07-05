@@ -17,4 +17,11 @@ How to Build a Resilient Architecture with RabbitMQ, C#, Entity Framework, and t
 You would have to adjust the code to use it in a production environment: Clean up the code and apply security best practices. Apply .NET Core design patterns, error handling, etc. You should also optimize the publisher acknowledgments and use a BackgroundService in the post service.
 
 
+
+
 [credit to christianzink](https://itnext.io/the-outbox-pattern-in-event-driven-asp-net-core-microservice-architectures-10b8d9923885)
+
+![images2](https://miro.medium.com/max/1400/1*OHnUE_VqIiI3bpdE05XgDQ.png)
+
+## Notes
+- Continuously polling the database is not good. You will improve the polling in the next step.
