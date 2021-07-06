@@ -28,7 +28,11 @@ namespace PostService.Data
         public async Task<ActionResult<IEnumerable<Post>>> ReadLatestPosts(string category, int count)
         {
             using var dbContext = new PostServiceContext(GetConnectionString(category));
-            return await dbContext.Post.OrderByDescending(p => p.PostId).Take(count).Include(x => x.User).Where(p => p.CategoryId == category).ToListAsync();
+            return await dbContext.Post.OrderByDescending(p => p.PostId)
+                                        .Take(count)
+                                        .Include(x => x.User)
+                                        .Where(p => p.CategoryId == category)
+                                        .ToListAsync();
         }
 
         public async Task<int> CreatePost(Post post)
@@ -38,22 +42,22 @@ namespace PostService.Data
             return await dbContext.SaveChangesAsync();
         }
 
-        public void InitDatabase(int countUsers, int countCategories)
+        public async Task InitDatabase(int countUsers, int countCategories)
         {
             foreach (var connectionString in _connectionStrings)
             {
                 using var dbContext = new PostServiceContext(connectionString);
-                dbContext.Database.EnsureDeleted();
-                dbContext.Database.EnsureCreated();
+                await dbContext.Database.EnsureDeletedAsync();
+                await dbContext.Database.EnsureDeletedAsync();
                 for (int i = 1; i <= countUsers; i++)
                 {
-                    dbContext.User.Add(new User { Name = "User" + i, Version = 1 });
-                    dbContext.SaveChanges();
+                    await dbContext.User.AddAsync(new User { Name = "User" + i, Version = 1 });
+                    await dbContext.SaveChangesAsync();
                 }
                 for (int i = 1; i <= countCategories; i++)
                 {
-                    dbContext.Category.Add(new Category { CategoryId = "Category" + i });
-                    dbContext.SaveChanges();
+                    await dbContext.Category.AddAsync(new Category { CategoryId = "Category" + i });
+                    await dbContext.SaveChangesAsync();
                 }
             }
         }
