@@ -18,7 +18,7 @@ services:
     volumes: 
       - /var/run/docker.sock:/var/run/docker.sock  
     ports:
-      - 5001:80
+      - 5001:5000
   database0:
     image: 'mysql:5.6'
     cpus: 0.5

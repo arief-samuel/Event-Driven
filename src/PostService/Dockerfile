@@ -22,8 +22,8 @@ RUN apk upgrade musl
 
 USER dotnetuser
 WORKDIR /app
-EXPOSE 80
+EXPOSE 5000
 
 COPY --from=publish /app/publish .
-ENTRYPOINT ["./PostService", "--urls", "http://0.0.0.0:80"]
+ENTRYPOINT ["./PostService", "--urls", "http://0.0.0.0:5000"]
 
