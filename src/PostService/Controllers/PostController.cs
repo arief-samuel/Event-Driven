@@ -24,17 +24,16 @@ namespace PostService.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<Post>> PostingPost(Post post)
+        public async Task<ActionResult<Post>> PostPost(Post post)
         {
             await _dataAccess.CreatePost(post);
             return NoContent();
         }
 
         [HttpGet("InitDatabase")]
-        public async Task InitDatabase([FromQuery] int countUsers, [FromQuery] int countCategories)
+        public void InitDatabase([FromQuery] int countUsers, [FromQuery] int countCategories)
         {
-            await _dataAccess.InitDatabase(countUsers, countCategories);
-            await Task.CompletedTask;
+            _dataAccess.InitDatabase(countUsers, countCategories);
         }
     }
 }
