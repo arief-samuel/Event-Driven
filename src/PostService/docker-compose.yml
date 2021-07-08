@@ -1,0 +1,43 @@
+# Please refer https://aka.ms/HTTPSinContainer on how to setup an https developer certificate for your ASP .NET Core service.
+
+version: '3.4'
+
+services:
+  webservice:
+    image: postservice:v1.0.0
+    cpus: 0.5
+    scale: 4
+    environment: 
+      - PostDbConnectionStrings__Shard1=server=database0; port=3306; database=post; user=root; password=pw; Persist Security Info=False; Connect Timeout=300      
+      - PostDbConnectionStrings__Shard1=server=database1; port=3306; database=post; user=root; password=pw; Persist Security Info=False; Connect Timeout=300   
+    #  - PostDbConnectionStrings__Shard2=server=database2; port=3306; database=post; user=root; password=pw; Persist Security Info=False; Connect Timeout=300   
+  loadbalancer:
+    image: dockercloud/haproxy
+    links: 
+      - webservice
+    volumes: 
+      - /var/run/docker.sock:/var/run/docker.sock  
+    ports:
+      - 5001:80
+  database0:
+    image: 'mysql:5.6'
+    cpus: 0.5
+    ports: 
+      - 3312:3306
+    environment: 
+      - MYSQL_ROOT_PASSWORD=pw
+  database1:
+    image: 'mysql:5.6'
+    cpus: 0.5
+    ports: 
+      - 3313:3306
+    environment: 
+      - MYSQL_ROOT_PASSWORD=pw
+  database2:
+    image: 'mysql:5.6'
+    cpus: 0.5
+    ports: 
+      - 3314:3306
+    environment: 
+      - MYSQL_ROOT_PASSWORD=pw    
+
