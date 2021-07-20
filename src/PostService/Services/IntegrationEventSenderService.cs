@@ -1,159 +1,102 @@
-﻿//using Microsoft.Extensions.DependencyInjection;
-//using Microsoft.Extensions.Hosting;
-//using PostService.Data;
-//using RabbitMQ.Client;
-//using System;
-//using System.Linq;
-//using System.Text;
-//using System.Threading;
-//using System.Threading.Tasks;
-//namespace UserService.Services
-//{
-//    public class IntegrationEventSenderService : BackgroundService
-//    {
-//        private readonly IServiceScopeFactory _scopeFactory;
-//        private CancellationTokenSource _wakeupCancelationTokenSource = new CancellationTokenSource();
-//        public IntegrationEventSenderService(IServiceScopeFactory scopeFactory)
-//        {
-//            _scopeFactory = scopeFactory;
-//            using var scope = _scopeFactory.CreateScope();
-//            using var dbContext = scope.ServiceProvider.GetRequiredService<PostServiceContext>();
-//            dbContext.Database.EnsureCreated();
-//        }
-//        public void StartPublishingOutstandingIntegrationEvents()
-//        {
-//            _wakeupCancelationTokenSource.Cancel();
-//        }
-//        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-//        {
-//            while (!stoppingToken.IsCancellationRequested)
-//            {
-//                await PublishOutstandingIntegrationEvents(stoppingToken);
-//            }
-//        }
-//        private async Task PublishOutstandingIntegrationEvents(CancellationToken stoppingToken)
-//        {
-//            try
-//            {
-//                var factory = new ConnectionFactory();
-//                var connection = factory.CreateConnection();
-//                var channel = connection.CreateModel();
+﻿using Microsoft.Extensions.Hosting;
+using Newtonsoft.Json.Linq;
+using PostService.Data;
+using PostService.Entities;
+using RabbitMQ.Client;
+using RabbitMQ.Client.Events;
+using System;
+using System.Collections.Generic;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
-//                channel.ConfirmSelect(); // enable publisher confirms
-//                IBasicProperties props = channel.CreateBasicProperties();
-                
-//                props.DeliveryMode = 2; // persist message
+namespace PostService.Services
+{
+    public class IntegrationEventListenerService : BackgroundService
+    {
+        private async Task ListenForIntegrationEvents(CancellationToken stoppingToken)
+        {
+            try
+            {
+                ConnectionFactory factory = new ConnectionFactory
+                {
+                    UserName = "test",
+                    Password = "test"
+                };
+                var endpoints = new System.Collections.Generic.List<AmqpTcpEndpoint>
+                {
+                  new AmqpTcpEndpoint("host.docker.internal"),
+                  new AmqpTcpEndpoint("localhost")
+                };
+                var connection = factory.CreateConnection(endpoints);
+                var channel = connection.CreateModel();
+                var consumer = new EventingBasicConsumer(channel);
 
+                var arguments = new Dictionary<String, object>
+                {
+                    { "x-single-active-consumer", true }
+                };
+                channel.QueueDeclare("user.postservicesingleactiveconsumer", false, false, false, arguments);
 
-//                while (!stoppingToken.IsCancellationRequested)
-//                {
-//                    {
-//                        using var scope = _scopeFactory.CreateScope();
-//                        using var dbContext = scope.ServiceProvider.GetRequiredService<PostServiceContext>();
-//                        var events = dbContext.IntegrationEventOutbox.OrderBy(o => o.ID).ToList();
-//                        foreach (var e in events)
-//                        {
-//                            var body = Encoding.UTF8.GetBytes(e.Data);
-//                            channel.BasicPublish(exchange: "user",
-//                                                             routingKey: e.Event,
-//                                                             basicProperties: props,
-//                                                             body: body);
-                            
-//                            channel.WaitForConfirmsOrDie(new TimeSpan(0, 0, 5)); // wait 5 seconds for publisher confirm
-//                            Console.WriteLine("Published: " + e.Event + " " + e.Data);
+                channel.ExchangeDeclare("userloadtest", "fanout");
+                channel.QueueBind("user.postservicesingleactiveconsumer", "userloadtest", "");
 
-//                            dbContext.Remove(e);
-//                            dbContext.SaveChanges();
-//                        }
-//                    }
+                consumer.Received += async(model, ea)  =>
+                {
+                    var body = ea.Body.ToArray();
+                    var message = Encoding.UTF8.GetString(body);
+                    Console.WriteLine("IntegrationEvent {0}", message);
 
-//                    using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
-//                        _wakeupCancelationTokenSource.Token, 
-//                        stoppingToken);
-//                    try
-//                    {
-//                        await Task.Delay(Timeout.Infinite, linkedCts.Token);
-//                    }
-//                    catch (OperationCanceledException)
-//                    {
-//                        if (_wakeupCancelationTokenSource.Token.IsCancellationRequested)
-//                        {
-//                            Console.WriteLine("Publish requested");
-//                            var tmp = _wakeupCancelationTokenSource;
-//                            _wakeupCancelationTokenSource = new CancellationTokenSource();
-//                            tmp.Dispose();
-//                        }
-//                        else if (stoppingToken.IsCancellationRequested)
-//                        {
-//                            Console.WriteLine("Shutting down.");
-//                        }
-//                    }
-//                }
-//            }
-//            catch (Exception e)
-//            {
-//                Console.WriteLine(e.ToString());
-//            }
-//        }
+                    var data = JObject.Parse(message);
+                    var type = ea.RoutingKey;
+                    var user = new User()
+                    {
+                        ID = data["id"].Value<int>(),
+                        Name = data["name"].Value<string>(),
+                        Version = data["version"].Value<int>()
+                    };
+                    if (type == "user.add")
+                    {
+                        await _dataAccess.AddUser(user);
 
-//        private static void ListenForIntegrationEvents()
-//        {
-//            var factory = new ConnectionFactory();
-//            var connection = factory.CreateConnection();
-//            var channel = connection.CreateModel();
-//            var consumer = new EventingBasicConsumer(channel);
+                    }
+                    else if (type == "user.update")
+                    {
+                        await _dataAccess.UpdateUser(user);
+                    }
+                    channel.BasicAck(ea.DeliveryTag, false);
+                };
+                channel.BasicConsume(queue: "user.postservicesingleactiveconsumer",
+                                         autoAck: false,
+                                         consumer: consumer);
+                try
+                {
+                    await Task.Delay(Timeout.Infinite, stoppingToken);
+                }
+                catch (OperationCanceledException)
+                {
+                    Console.WriteLine("Shutting down.");
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+            }
+        }
 
-//            consumer.Received += (model, ea) =>
-//            {
-//                var contextOptions = new DbContextOptionsBuilder<PostServiceContext>()
-//                    .UseSqlite(@"Data Source=post.db")
-//                    .Options;
-//                var dbContext = new PostServiceContext(contextOptions);
+        private readonly DataAccess _dataAccess;
 
-//                var body = ea.Body.ToArray();
-//                var message = Encoding.UTF8.GetString(body);
-//                Console.WriteLine(" [x] Received {0}", message);
+        public IntegrationEventListenerService(DataAccess dataAccess)
+        {
+            _dataAccess = dataAccess;
+        }
 
-//                var data = JObject.Parse(message);
-//                var type = ea.RoutingKey;
-//                if (type == "user.add")
-//                {
-//                    if (dbContext.User.Any(a => a.ID == data["id"].Value<int>()))
-//                    {
-//                        Console.WriteLine("Ignoring old/duplicate entity");
-//                    }
-//                    else
-//                    {
-//                        dbContext.User.Add(new User()
-//                        {
-//                            ID = data["id"].Value<int>(),
-//                            Name = data["name"].Value<string>(),
-//                            Version = data["version"].Value<int>()
-//                        });
-//                        dbContext.SaveChanges();
-//                    }
-//                }
-//                else if (type == "user.update")
-//                {
-//                    int newVersion = data["version"].Value<int>();
-//                    var user = dbContext.User.First(a => a.ID == data["id"].Value<int>());
-//                    if (user.Version >= newVersion)
-//                    {
-//                        Console.WriteLine("Ignoring old/duplicate entity");
-//                    }
-//                    else
-//                    {
-//                        user.Name = data["newname"].Value<string>();
-//                        user.Version = newVersion;
-//                        dbContext.SaveChanges();
-//                    }
-//                }
-//                channel.BasicAck(ea.DeliveryTag, false);
-//            };
-//            channel.BasicConsume(queue: "user.postservice",
-//                                     autoAck: false,
-//                                     consumer: consumer);
-//        }
-
-//    }
-//}
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        {
+            while (!stoppingToken.IsCancellationRequested)
+            {
+                await ListenForIntegrationEvents(stoppingToken);
+            }
+        }
+    }
+}

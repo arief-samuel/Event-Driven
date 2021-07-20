@@ -58,6 +58,36 @@ namespace PostService.Data
             }
         }
 
+        public async Task AddUser(User user)
+        {
+            foreach (var connectionString in _connectionStrings)
+            {
+                using var dbContext = new PostServiceContext(connectionString);
+                    await dbContext.User.AddAsync(user);
+                    await dbContext.SaveChangesAsync();
+            }
+        }
+
+        public async Task UpdateUser(User user)
+        {
+            foreach (var connectionString in _connectionStrings)
+            {
+                using var dbContext = new PostServiceContext(connectionString);
+                var exitsingUser = dbContext.User.First(a => a.ID == user.ID);
+
+                if (exitsingUser.Version >= user.Version)
+                {
+                    Console.WriteLine("Ignoring old/duplicate entity");
+                }
+                else
+                {
+                    exitsingUser.Name = user.Name;
+                    exitsingUser.Version = user.Version;
+                    await dbContext.SaveChangesAsync();
+                }
+            }
+        }
+
         private string GetConnectionString(string category)
         {
             using var md5 = MD5.Create();

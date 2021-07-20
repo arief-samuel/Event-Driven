@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using PostService.Data;
+using PostService.Services;
 
 namespace PostService
 {
@@ -29,6 +30,10 @@ namespace PostService
             });
 
             services.AddSingleton<DataAccess>();
+            services.AddSingleton<IntegrationEventListenerService>();
+            services.AddHostedService<IntegrationEventListenerService>(provider =>
+                provider.GetService<IntegrationEventListenerService>()
+            );
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

@@ -1,21 +1,27 @@
-FROM mcr.microsoft.com/dotnet/aspnet:5.0-focal AS base
+FROM mcr.microsoft.com/dotnet/sdk:5.0-alpine AS publish
+WORKDIR /src
+COPY ["PostService.csproj", "./"]
+
+RUN dotnet restore "PostService.csproj" --runtime alpine-x64
+COPY . .
+RUN dotnet publish "PostService.csproj" -c Release -o /app/publish \
+    --no-restore \
+    --runtime alpine-x64 \
+    --self-contained true \
+    /p:PublishTrimmed=true \
+    /p:PublishSingleFile=true
+
+FROM mcr.microsoft.com/dotnet/runtime-deps:5.0-alpine AS final
+
+RUN adduser --disabled-password \
+    --home /app \
+    --gecos '' dotnetuser && chown -R dotnetuser /app
+
+RUN apk upgrade musl
+
+USER dotnetuser
 WORKDIR /app
 EXPOSE 80
 
-ENV ASPNETCORE_URLS=http://+:80
-
-FROM mcr.microsoft.com/dotnet/sdk:5.0-focal AS build
-WORKDIR /src
-COPY ["PostService.csproj", "./"]
-RUN dotnet restore "PostService.csproj"
-COPY . .
-WORKDIR "/src/."
-RUN dotnet build "PostService.csproj" -c Release -o /app/build
-
-FROM build AS publish
-RUN dotnet publish "PostService.csproj" -c Release -o /app/publish
-
-FROM base AS final
-WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "PostService.dll"]
+ENTRYPOINT ["./PostService", "--urls", "http://0.0.0.0:80"]
