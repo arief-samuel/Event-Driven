@@ -1,16 +1,14 @@
-# Please refer https://aka.ms/HTTPSinContainer on how to setup an https developer certificate for your ASP .NET Core service.
-
 version: '3.4'
 
 services:
   webservice:
-    image: 'ariefs/postservice:v1.0.3'   
+    image: 'ariefs/postservice:v1.0.3'
     cpus: 0.5
-    scale: 4
+    scale: 6
     environment:
-      - PostDbConnectionStrings__Shard0=server=database0; port=3306; database=post; user=root; password=pw; Persist Security Info=False; Connect Timeout=300      
-      - PostDbConnectionStrings__Shard1=server=database1; port=3306; database=post; user=root; password=pw; Persist Security Info=False; Connect Timeout=300   
-    #  - PostDbConnectionStrings__Shard2=server=database2; port=3306; database=post; user=root; password=pw; Persist Security Info=False; Connect Timeout=300   
+      - PostDbConnectionStrings__Shard0=server=database0; port=3306; database=post; user=root; password=pw; Persist Security Info=False; Connect Timeout=300
+      - PostDbConnectionStrings__Shard1=server=database1; port=3306; database=post; user=root; password=pw; Persist Security Info=False; Connect Timeout=300
+      - PostDbConnectionStrings__Shard2=server=database2; port=3306; database=post; user=root; password=pw; Persist Security Info=False; Connect Timeout=300
   loadbalancer:
     image: dockercloud/haproxy
     links:
@@ -20,23 +18,21 @@ services:
     ports:
       - 5001:80
   database0:
-    image: 'mysql:5.6'
+    image: 'mysql:latest'
     cpus: 0.5
     ports:
       - 3312:3306
     environment:
       - MYSQL_ROOT_PASSWORD=pw
   database1:
-    image: 'mysql:5.6'
+    image: 'mysql:latest'
     cpus: 0.5
     ports:
       - 3313:3306
     environment:
       - MYSQL_ROOT_PASSWORD=pw
   database2:
-    image: 'mysql:5.6'
+    image: 'mysql:latest'
     cpus: 0.5
     ports:
       - 3314:3306
-    environment:
-      - MYSQL_ROOT_PASSWORD=pw 
