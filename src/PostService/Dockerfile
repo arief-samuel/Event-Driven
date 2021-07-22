@@ -8,8 +8,6 @@ RUN dotnet publish "PostService.csproj" -c Release -o /app/publish \
     --no-restore \
     --runtime alpine-x64 \
     --self-contained true \
-    /p:PublishTrimmed=true \
-    /p:PublishSingleFile=true
 
 FROM mcr.microsoft.com/dotnet/runtime-deps:5.0-alpine AS final
 

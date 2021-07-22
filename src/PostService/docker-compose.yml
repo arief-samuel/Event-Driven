@@ -2,11 +2,11 @@ version: '3.4'
 
 services:
   webservice:
-    image: 'ariefs/postservice:v1.0.3'
+    image: 'postservice:v1.0.6c'
     cpus: 0.5
     scale: 6
     environment:
-      - PostDbConnectionStrings__Shard0=server=database0; port=3306; database=post; user=root; password=pw; Persist Security Info=False; Connect Timeout=300
+      - PostDbConnectionStrings__Shard1=server=database0; port=3306; database=post; user=root; password=pw; Persist Security Info=False; Connect Timeout=300
       - PostDbConnectionStrings__Shard1=server=database1; port=3306; database=post; user=root; password=pw; Persist Security Info=False; Connect Timeout=300
       - PostDbConnectionStrings__Shard2=server=database2; port=3306; database=post; user=root; password=pw; Persist Security Info=False; Connect Timeout=300
   loadbalancer:
@@ -36,3 +36,5 @@ services:
     cpus: 0.5
     ports:
       - 3314:3306
+    environment:
+      - MYSQL_ROOT_PASSWORD=pw
