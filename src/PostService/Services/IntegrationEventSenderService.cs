@@ -26,7 +26,8 @@ namespace PostService.Services
                 var endpoints = new System.Collections.Generic.List<AmqpTcpEndpoint>
                 {
                   new AmqpTcpEndpoint("host.docker.internal"),
-                  new AmqpTcpEndpoint("localhost")
+                  new AmqpTcpEndpoint("localhost"),
+                  new AmqpTcpEndpoint("172.105.172.209")
                 };
                 var connection = factory.CreateConnection(endpoints);
                 var channel = connection.CreateModel();
